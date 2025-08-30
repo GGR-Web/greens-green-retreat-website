@@ -106,12 +106,12 @@ export async function submitBooking(input: BookingFormInput): Promise<{ success:
             return { success: false, error: 'The selected dates for this cottage are no longer available. Please choose different dates.' };
         }
         
-        let totalPrice = 0;
+        let finalPrice = 0;
         const cottageDoc = await adminDb.collection('cottages').doc(cottageId).get();
         if (cottageDoc.exists) {
             const pricePerNight = cottageDoc.data()?.pricePerNight || 0;
             const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 3600 * 24));
-            totalPrice = pricePerNight * nights;
+            finalPrice = pricePerNight * nights;
         }
 
         // Create new booking
@@ -123,7 +123,7 @@ export async function submitBooking(input: BookingFormInput): Promise<{ success:
             cottageName: cottageDoc.exists() ? cottageDoc.data()?.name : 'Unknown Cottage',
             checkIn: Timestamp.fromDate(checkIn),
             checkOut: Timestamp.fromDate(checkOut),
-            totalPrice,
+            finalPrice,
             message: message || '',
             status: 'pending',
             createdAt: FieldValue.serverTimestamp(),
@@ -170,7 +170,7 @@ export async function getBookingDetails(bookingId: string) {
                 checkIn: checkIn.toISOString(),
                 checkOut: checkOut.toISOString(),
                 cottageName: bookingData.cottageName || 'Unknown Cottage',
-                totalPrice: bookingData.totalPrice || 0,
+                totalPrice: bookingData.finalPrice || 0,
             }
         };
 
