@@ -10,7 +10,7 @@ import { format } from "date-fns";
 
 // This is the correct type definition for a page using searchParams
 type ThankYouPageProps = {
-  searchParams?: { [key: string]: string | string[] | undefined };
+  searchParams: { [key: string]: string | string[] | undefined };
 };
 
 export default async function ThankYouPage({ searchParams }: ThankYouPageProps) {
@@ -87,7 +87,7 @@ export default async function ThankYouPage({ searchParams }: ThankYouPageProps) 
                         <Separator/>
                         <div className="flex justify-between text-lg">
                             <span className="text-muted-foreground">Estimated Total:</span>
-                            <span className="font-bold text-primary">KES {booking.totalPrice.toLocaleString()}</span>
+                            <span className="font-bold text-primary">KES {booking.totalPrice?.toLocaleString() ?? '0'}</span>
                         </div>
                     </div>
                 </div>
