@@ -105,6 +105,14 @@ export async function submitBooking(input: BookingFormInput): Promise<{ success:
         if (isOverlapping) {
             return { success: false, error: 'The selected dates for this cottage are no longer available. Please choose different dates.' };
         }
+        
+        let totalPrice = 0;
+        const cottageDoc = await adminDb.collection('cottages').doc(cottageId).get();
+        if (cottageDoc.exists) {
+            const pricePerNight = cottageDoc.data()?.pricePerNight || 0;
+            const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 3600 * 24));
+            totalPrice = pricePerNight * nights;
+        }
 
         // Create new booking
         const newBookingRef = await bookingsRef.add({
@@ -112,8 +120,10 @@ export async function submitBooking(input: BookingFormInput): Promise<{ success:
             email,
             phone,
             cottageId,
+            cottageName: cottageDoc.exists() ? cottageDoc.data()?.name : 'Unknown Cottage',
             checkIn: Timestamp.fromDate(checkIn),
             checkOut: Timestamp.fromDate(checkOut),
+            totalPrice,
             message: message || '',
             status: 'pending',
             createdAt: FieldValue.serverTimestamp(),
@@ -143,17 +153,6 @@ export async function getBookingDetails(bookingId: string) {
         }
         
         const bookingData = bookingDoc.data()!;
-
-        let cottageData = { name: 'Unknown Cottage', pricePerNight: 0 };
-        if (bookingData.cottageId) {
-            const cottageDoc = await adminDb.collection('cottages').doc(bookingData.cottageId).get();
-            if (cottageDoc.exists) {
-                cottageData = {
-                    name: cottageDoc.data()!.name || 'Unnamed Cottage',
-                    pricePerNight: cottageDoc.data()!.pricePerNight || 0
-                };
-            }
-        }
         
         const checkIn = bookingData.checkIn && (bookingData.checkIn as Timestamp).toDate();
         const checkOut = bookingData.checkOut && (bookingData.checkOut as Timestamp).toDate();
@@ -161,9 +160,6 @@ export async function getBookingDetails(bookingId: string) {
         if (!checkIn || !checkOut) {
             return { error: 'Booking is missing check-in or check-out dates.' };
         }
-
-        const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 3600 * 24));
-        const totalPrice = bookingData.finalPrice > 0 ? bookingData.finalPrice : nights * (cottageData.pricePerNight || 0);
 
         return {
             booking: {
@@ -173,9 +169,8 @@ export async function getBookingDetails(bookingId: string) {
                 phone: bookingData.phone,
                 checkIn: checkIn.toISOString(),
                 checkOut: checkOut.toISOString(),
-                cottageName: cottageData.name,
-                nights,
-                totalPrice,
+                cottageName: bookingData.cottageName || 'Unknown Cottage',
+                totalPrice: bookingData.totalPrice || 0,
             }
         };
 

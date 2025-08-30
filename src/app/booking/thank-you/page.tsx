@@ -8,7 +8,12 @@ import { CheckCircle, AlertTriangle, Home } from "lucide-react";
 import { getBookingDetails } from "../actions";
 import { format } from "date-fns";
 
-export default async function ThankYouPage({ searchParams }: { searchParams?: { [key: string]: string | string[] | undefined } }) {
+// This is the correct type definition for a page using searchParams
+type ThankYouPageProps = {
+  searchParams?: { [key: string]: string | string[] | undefined };
+};
+
+export default async function ThankYouPage({ searchParams }: ThankYouPageProps) {
   const bookingId = searchParams?.id as string | undefined;
 
   if (!bookingId) {
@@ -81,7 +86,7 @@ export default async function ThankYouPage({ searchParams }: { searchParams?: { 
                         </div>
                         <Separator/>
                         <div className="flex justify-between text-lg">
-                            <span className="text-muted-foreground">Total Price:</span>
+                            <span className="text-muted-foreground">Estimated Total:</span>
                             <span className="font-bold text-primary">KES {booking.totalPrice.toLocaleString()}</span>
                         </div>
                     </div>
