@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "sanctuary-stays"
+    "default": "ggr-staging",
+    "staging": "ggr-staging",
+    "prod": "ggr-prod"
   }
 }
