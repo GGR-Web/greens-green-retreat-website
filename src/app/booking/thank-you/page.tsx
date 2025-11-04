@@ -14,20 +14,32 @@ import { CheckCircle, AlertTriangle, Home } from "lucide-react";
 import { getBookingDetails } from "../actions";
 import { format } from "date-fns";
 
-// Next 15 can provide searchParams as an object OR a Promise<object>.
-type SearchParams = Record<string, string | string[] | undefined>;
-type ThankYouPageProps = {
-  searchParams?: SearchParams | Promise<SearchParams>;
-};
+@@
+-// Next 15 can provide searchParams as an object OR a Promise<object>.
+-type SearchParams = Record<string, string | string[] | undefined>;
+-type ThankYouPageProps = {
+-  searchParams?: SearchParams | Promise<SearchParams>;
+-};
+-
+-export default async function ThankYouPage({ searchParams }: ThankYouPageProps) {
+-  // Normalize searchParams whether it's a plain object or a Promise
+-  const sp: SearchParams | undefined =
+-    searchParams && typeof (searchParams as any)?.then === "function"
+-      ? await (searchParams as Promise<SearchParams>)
+-      : (searchParams as SearchParams | undefined);
++// Next 15 type compatibility: searchParams must satisfy Promise<any> | undefined
++type SearchParams = Record<string, string | string[] | undefined>;
++type ThankYouPageProps = {
++  searchParams?: Promise<SearchParams>;
++};
++
++export default async function ThankYouPage({ searchParams }: ThankYouPageProps) {
++  // Await works for both Promise and non-promise values; if undefined, default to {}
++  const sp: SearchParams = (await (searchParams ?? ({} as any))) as SearchParams;
+@@
+-  const bookingId = sp?.id as string | undefined;
++  const bookingId = sp?.id as string | undefined;
 
-export default async function ThankYouPage({ searchParams }: ThankYouPageProps) {
-  // Normalize searchParams whether it's a plain object or a Promise
-  const sp: SearchParams | undefined =
-    searchParams && typeof (searchParams as any)?.then === "function"
-      ? await (searchParams as Promise<SearchParams>)
-      : (searchParams as SearchParams | undefined);
-
-  const bookingId = sp?.id as string | undefined;
 
   if (!bookingId) {
     notFound();
