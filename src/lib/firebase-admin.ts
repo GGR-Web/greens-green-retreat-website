@@ -1,33 +1,29 @@
+import 'server-only';
+import * as admin from 'firebase-admin';
 
-import admin from 'firebase-admin';
-import { getAuth } from 'firebase-admin/auth';
-import { getFirestore } from 'firebase-admin/firestore';
+let app: admin.app.App | undefined;
 
-if (!admin.apps.length) {
-  if (process.env.NODE_ENV === 'production') {
-    // For production, use Application Default Credentials.
-    admin.initializeApp();
-  } else {
-    // For local development, use the service account key from environment variables.
-    const serviceAccountKey = process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT_KEY;
-    if (serviceAccountKey) {
-      try {
-        const serviceAccount = JSON.parse(serviceAccountKey);
-        admin.initializeApp({
-          credential: admin.credential.cert(serviceAccount),
-        });
-      } catch (error: any) {
-         console.error('Failed to parse Firebase service account key:', error);
-      }
+function ensureApp() {
+  if (!admin.apps.length) {
+    const inProd = process.env.NODE_ENV === 'production';
+    if (inProd) {
+      // PRODUCTION: Application Default Credentials (ADC)
+      app = admin.initializeApp();
     } else {
-        console.warn("FIREBASE_ADMIN_SERVICE_ACCOUNT_KEY is not set for local development. Admin features may not work.");
+      // LOCAL/EMULATOR: projectId only
+      app = admin.initializeApp({
+        projectId: process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT,
+      });
     }
+  } else {
+    app = admin.app();
   }
 }
 
-// Use functions to lazily initialize services, preventing errors when the SDK isn't fully configured (e.g., local dev without key).
-const adminDb = admin.apps.length ? getFirestore() : null;
-const adminAuth = admin.apps.length ? getAuth() : null;
+export function getAdminDb(): FirebaseFirestore.Firestore {
+  ensureApp();
+  return admin.firestore();
+}
 
-
-export { adminDb, adminAuth };
+// Back-compat: some modules import { adminDb }. Provide a stable binding.
+export const adminDb = getAdminDb();
