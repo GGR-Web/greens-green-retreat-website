@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -71,8 +72,22 @@ async function getCottageData(slug: string): Promise<{ cottage: Cottage | null, 
   }
 }
 
-export default async function CottageDetailsPage({ params }: { params: { slug: string } }) {
-  const { cottage, navigation } = await getCottageData(params.slug);
+// Next 15 type compatibility: params must satisfy Promise<any> | undefined
+type Params = { slug: string };
+type PageProps = {
+  params?: Promise<Params>;
+};
+
+export default async function CottageDetailsPage({ params }: PageProps) {
+  // Normalize: await works whether Next gives a promise or a plain object; if undefined, default to {}
+  const p: Params = (await (params ?? ({} as any))) as Params;
+  const slug = p?.slug;
+
+  if (!slug) {
+    notFound();
+  }
+
+  const { cottage, navigation } = await getCottageData(slug);
 
   if (!cottage) {
     notFound();
