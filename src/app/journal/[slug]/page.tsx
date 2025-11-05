@@ -10,8 +10,21 @@ import LikeButton from '../like-button';
 import ShareButtons from '../share-buttons';
 import CommentSection from '../comment-section';
 
-export default async function JournalArticlePage({ params }: { params: { slug: string } }) {
-  const { post, error } = await getPostBySlug(params.slug);
+// Next 15 type compatibility: params must satisfy Promise<any> | undefined
+type Params = { slug: string };
+type PageProps = {
+  params?: Promise<Params>;
+};
+
+export default async function JournalArticlePage({ params }: PageProps) {
+  // Normalize: await works whether Next gives a promise or a plain object; if undefined, default to {}
+  const p: Params = (await (params ?? ({} as any))) as Params;
+
+  const slug = p?.slug;
+  if (!slug) notFound();
+
+  // === keep your existing page logic below ===
+  const { post, error } = await getPostBySlug(slug);
 
   if (error || !post) {
     notFound();
