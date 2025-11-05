@@ -66,12 +66,21 @@ const AiChatbotOutputSchema = z.object({
 export type AiChatbotOutput = z.infer<typeof AiChatbotOutputSchema>;
 
 const prompt = ai.definePrompt({
-    name: 'aiChatbotPrompt',
-    system: `You must be able to understand and respond in multiple languages. If a user asks a question in a language other than English, you must provide the answer in that same language.\n    \nYou are a virtual assistant for Green's Green Retreat, a nature sanctuary in Tigoni, Kenya. \nYour goal is to answer guest questions accurately and encourage them to book a stay.\n\n**PERSONALITY & GOAL:**\n{{#if chatbotTone}}Your personality and tone should be: {{{chatbotTone}}}.{{/if}}\n{{#if chatbotGoal}}Your primary goal is: {{{chatbotGoal}}}.{{/if}}\n\nYou must answer questions based ONLY on the following information. Do not invent details. If the answer is not in this information, say that you do not have the answer and offer to capture their contact details for a team member to follow up.\n\n**KNOWLEDGE BASE:**\n{{{knowledgeBase}}}\n\n- If a user's question cannot be answered with the KNOWLEDGE BASE, you MUST set 'followUpRequired' to true and respond with: \"{{{chatbotLeadPrompt}}}\"\n- If the user provides their name and email after you have asked for it, you MUST use the 'createLead' tool to save their information. The conversation history MUST be passed to the tool as a string. Your response to the user should then be: \"Thank you! A member of our team will be in touch with you shortly.\"\n- Do not ask for contact information unless you cannot answer the question.\n- Do not use the createLead tool unless the user has provided their contact details.`,
-    tools: [createLeadTool],
-    input: { schema: z.object({ \n        conversationHistory: z.string(), \n        query: z.string(), \n        knowledgeBase: z.string(),\n        chatbotTone: z.string().optional(),\n        chatbotGoal: z.string().optional(),\n        chatbotLeadPrompt: z.string().optional(),\n    }) },
-    output: { schema: AiChatbotOutputSchema },
-    prompt: `Conversation History:\n{{{conversationHistory}}}\n\nUser: {{{query}}}\nAI:`,
+   name: 'aiChatbotPrompt',
+   system: `You must be able to understand and respond in multiple languages. If a user asks a question in a language other than English, you must provide the answer in that same language.\n \nYou are a virtual assistant for Green's Green Retreat, a nature sanctuary in Tigoni, Kenya. \nYour goal is to answer guest questions accurately and encourage them to book a stay.\n \n**PERSONALITY & GOAL:**\n{{#if chatbotTone}}Your personality and tone should be: {{{chatbotTone}}}.{{/if}}\n{{#if chatbotGoal}}Your primary goal is: {{{chatbotGoal}}}.{{/if}}\n \nYou must answer questions based ONLY on the following information. Do not invent details. If the answer is not in this information, say that you do not have the answer and offer to capture their contact details for a team member to follow up.\n \n**KNOWLEDGE BASE:**\n{{{knowledgeBase}}}\n \n- If a user's question cannot be answered with the KNOWLEDGE BASE, you MUST set 'followUpRequired' to true and respond with: "{{{chatbotLeadPrompt}}}"\n- If the user provides their name and email after you have asked for it, you MUST use the 'createLead' tool to save their information. The conversation history MUST be passed to the tool as a string. Your response to the user should be: "Thank you! A member of our team will be in touch with you shortly."\n- Do not ask for contact information unless you cannot answer the question.\n- Do not use the createLead tool unless the user has provided their contact details.`,
+  tools: [createLeadTool],
+  input: {
+    schema: z.object({
+      conversationHistory: z.string(),
+      query: z.string(),
+      knowledgeBase: z.string(),
+      chatbotTone: z.string().optional(),
+      chatbotGoal: z.string().optional(),
+      chatbotLeadPrompt: z.string().optional(),
+    }),
+  },
+  output: { schema: AiChatbotOutputSchema },
+  prompt: `Conversation History:\n{{{conversationHistory}}}\n\nUser: {{{query}}}\nAI:`,
 });
 
 
@@ -94,12 +103,20 @@ const aiChatbotFlow = ai.defineFlow(
         
         const defaultLeadPrompt = "I'm sorry, I can't seem to find the answer to that. I'd be happy to have a member of our team get back to you. What is your name and email address?";
 
-        const llmResponse = await prompt({ \n            conversationHistory, \n            query: input.query, \n            knowledgeBase,\n            chatbotTone: aiSettings.chatbotTone,\n            chatbotGoal: aiSettings.chatbotGoal,\n            chatbotLeadPrompt: aiSettings.chatbotLeadPrompt || defaultLeadPrompt,\n        });
+        const llmResponse = await prompt({
+          conversationHistory,
+          query: input.query,
+          knowledgeBase,
+          chatbotTone: aiSettings.chatbotTone,
+          chatbotGoal: aiSettings.chatbotGoal,
+          chatbotLeadPrompt: aiSettings.chatbotLeadPrompt || defaultLeadPrompt,
+        });
         const output = llmResponse.output;
 
         if (!output) {
-            return { \n                answer: "I'm sorry, I couldn't generate a response at this time. Please try again later.",
-                followUpRequired: false
+            return {
+              answer: "I'm sorry, I couldn't generate a response at this time. Please try again later.",
+              followUpRequired: false,
             };
         }
 
@@ -113,7 +130,9 @@ const aiChatbotFlow = ai.defineFlow(
             }).catch(console.error); // Log errors but don't block response
         }
         
-        return { \n            answer: output.answer,\n            followUpRequired: output.followUpRequired,
+        return {
+          answer: output.answer,
+          followUpRequired: output.followUpRequired,
         };
     } catch (error) {
         console.error("Error in aiChatbotFlow:", error);
