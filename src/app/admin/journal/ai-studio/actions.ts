@@ -16,11 +16,16 @@ export async function generateBlogArticle(input: GenerateBlogArticleInput): Prom
 
 export async function saveArticleAsDraft(title: string, content: string): Promise<{ success: boolean; postId?: string; error?: string }> {
     try {
+        const slug = title.toLowerCase().replace(/\s+/g, '-').slice(0, 50);
+        const excerpt = content.substring(0, 150);
         const result = await createPost({
             title,
             content,
             author: "AI Assistant",
             status: "draft",
+            slug,
+            excerpt,
+            featuredImageUrl: "",
         });
 
         return { success: result.success, postId: result.postId, error: result.error };
