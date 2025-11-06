@@ -83,12 +83,26 @@ export default function AdminEditBookingPage() {
         
         const bookingResult = await getBooking(bookingId);
         if (bookingResult.booking) {
-            const { booking } = bookingResult;
+            // Broaden local view of the booking document to include optional fields
+            type BookingDoc = {
+              id: string;
+              name?: string;
+              email?: string;
+              phone?: string;
+              cottageId?: string;
+              checkIn: Date | null;
+              checkOut: Date | null;
+              createdAt: string;
+              finalPrice?: number;
+              bookingNotes?: string;
+            };
+
+            const booking = bookingResult.booking as BookingDoc;
             form.reset({
-                name: booking.name,
-                email: booking.email,
-                phone: booking.phone,
-                cottageId: booking.cottageId,
+                name: booking?.name ?? '',
+                email: booking?.email ?? '',
+                phone: booking?.phone ?? '',
+                cottageId: booking?.cottageId ?? '',
                 checkIn: booking.checkIn ? new Date(booking.checkIn) : undefined,
                 checkOut: booking.checkOut ? new Date(booking.checkOut) : undefined,
                 customPrice: booking.finalPrice,

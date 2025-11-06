@@ -27,3 +27,11 @@ export function getAdminDb(): FirebaseFirestore.Firestore {
 
 // Back-compat: some modules import { adminDb }. Provide a stable binding.
 export const adminDb = getAdminDb();
+
+// --- NEW: Admin Auth helper + back-compat export ---
+export function getAdminAuth(): admin.auth.Auth {
+  ensureApp();
+  return admin.auth();
+}
+
+export const adminAuth = getAdminAuth();
