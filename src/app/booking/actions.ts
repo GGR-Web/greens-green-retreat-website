@@ -120,7 +120,7 @@ export async function submitBooking(input: BookingFormInput): Promise<{ success:
             email,
             phone,
             cottageId,
-            cottageName: cottageDoc.exists() ? cottageDoc.data()?.name : 'Unknown Cottage',
+            cottageName: cottageDoc.exists ? cottageDoc.data()?.name : 'Unknown Cottage',
             checkIn: Timestamp.fromDate(checkIn),
             checkOut: Timestamp.fromDate(checkOut),
             finalPrice,
