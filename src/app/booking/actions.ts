@@ -57,14 +57,19 @@ export async function getConfirmedBookings(cottageId: string): Promise<{ booking
             return { bookings: [] };
         }
 
-        const bookings = bookingsSnapshot.docs.map(doc => {
-            const data = doc.data();
-            // Firestore timestamps need to be converted to JS Dates
-            const checkIn = (data.checkIn as Timestamp).toDate();
-            const checkOut = (data.checkOut as Timestamp).toDate();
-            return { id: doc.id, from: checkIn, to: checkOut };
-        });
-        
+        const bookings = bookingsSnapshot.docs
+            .map(doc => {
+                const data = doc.data();
+                const checkIn = data.checkIn && (data.checkIn as Timestamp).toDate();
+                const checkOut = data.checkOut && (data.checkOut as Timestamp).toDate();
+
+                if (checkIn && checkOut) {
+                    return { id: doc.id, from: checkIn, to: checkOut };
+                }
+                return null;
+            })
+            .filter((booking): booking is { id: string; from: Date; to: Date } => booking !== null);
+
         return { bookings };
 
     } catch (error: any) {
