@@ -1,7 +1,7 @@
-
 'use server';
+import 'server-only';
 
-import { adminDb } from '@/lib/firebase-admin';
+import { getAdminDb } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
 import { FieldValue, Timestamp, FieldPath } from 'firebase-admin/firestore';
 import { z } from 'zod';
@@ -31,12 +31,10 @@ const adminBookingFormSchema = z.object({
 type AdminBookingFormInput = z.infer<typeof adminBookingFormSchema>;
 
 export async function getBookings(): Promise<{ bookings?: Booking[], error?: string }> {
-    if (!adminDb) {
-        return { error: 'Database not initialized.' };
-    }
+    const db = getAdminDb();
 
     try {
-        const bookingsSnapshot = await adminDb.collection('bookings').orderBy('createdAt', 'desc').get();
+        const bookingsSnapshot = await db.collection('bookings').orderBy('createdAt', 'desc').get();
 
         if (bookingsSnapshot.empty) {
             return { bookings: [] };
@@ -47,7 +45,7 @@ export async function getBookings(): Promise<{ bookings?: Booking[], error?: str
             let cottageName = 'Unknown Cottage';
             
             if (data.cottageId) {
-                 const cottageDoc = await adminDb.collection('cottages').doc(data.cottageId).get();
+                 const cottageDoc = await db.collection('cottages').doc(data.cottageId).get();
                  if (cottageDoc.exists) {
                     cottageName = cottageDoc.data()?.name || 'Unnamed Cottage';
                  }
@@ -81,15 +79,13 @@ export async function getBookings(): Promise<{ bookings?: Booking[], error?: str
 }
 
 export async function updateBookingStatus(bookingId: string, status: string): Promise<{ success: boolean; error?: string }> {
-    if (!adminDb) {
-        return { success: false, error: 'Database not initialized.' };
-    }
+    const db = getAdminDb();
     if (!bookingId || !status) {
         return { success: false, error: 'Invalid input provided.'};
     }
 
     try {
-        await adminDb.collection('bookings').doc(bookingId).update({ status });
+        await db.collection('bookings').doc(bookingId).update({ status });
         revalidatePath('/admin/bookings'); // Revalidate the bookings page to show the updated status
         return { success: true };
     } catch (error: any) {
@@ -100,9 +96,7 @@ export async function updateBookingStatus(bookingId: string, status: string): Pr
 
 
 export async function createBookingFromAdmin(input: AdminBookingFormInput): Promise<{ success: boolean; bookingId?: string; error?: string }> {
-    if (!adminDb) {
-        return { success: false, error: 'Database connection not available.' };
-    }
+    const db = getAdminDb();
 
     const parsedData = adminBookingFormSchema.safeParse(input);
     if (!parsedData.success) {
@@ -113,7 +107,7 @@ export async function createBookingFromAdmin(input: AdminBookingFormInput): Prom
     const { name, email, phone, cottageId, checkIn, checkOut, customPrice, bookingNotes } = parsedData.data;
 
     try {
-        const bookingsRef = adminDb.collection('bookings');
+        const bookingsRef = db.collection('bookings');
 
         // Check for overlapping bookings
         const overlappingBookingsSnapshot = await bookingsRef
@@ -137,7 +131,7 @@ export async function createBookingFromAdmin(input: AdminBookingFormInput): Prom
         if (customPrice && customPrice > 0) {
             finalPrice = customPrice;
         } else {
-            const cottageDoc = await adminDb.collection('cottages').doc(cottageId).get();
+            const cottageDoc = await db.collection('cottages').doc(cottageId).get();
             const pricePerNight = cottageDoc.data()?.pricePerNight || 0;
             const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 3600 * 24));
             finalPrice = pricePerNight * nights;
@@ -168,9 +162,9 @@ export async function createBookingFromAdmin(input: AdminBookingFormInput): Prom
 }
 
 export async function getBooking(bookingId: string) {
-    if (!adminDb) return { error: "Database not initialized." };
+    const db = getAdminDb();
     try {
-        const bookingDoc = await adminDb.collection('bookings').doc(bookingId).get();
+        const bookingDoc = await db.collection('bookings').doc(bookingId).get();
         if (!bookingDoc.exists) {
             return { error: "Booking not found." };
         }
@@ -195,9 +189,7 @@ export async function getBooking(bookingId: string) {
 }
 
 export async function updateBooking(bookingId: string, input: AdminBookingFormInput): Promise<{ success: boolean; error?: string }> {
-    if (!adminDb) {
-        return { success: false, error: 'Database connection not available.' };
-    }
+    const db = getAdminDb();
 
     const parsedData = adminBookingFormSchema.safeParse(input);
     if (!parsedData.success) {
@@ -208,7 +200,7 @@ export async function updateBooking(bookingId: string, input: AdminBookingFormIn
     const { name, email, phone, cottageId, checkIn, checkOut, customPrice, bookingNotes } = parsedData.data;
 
     try {
-        const bookingsRef = adminDb.collection('bookings');
+        const bookingsRef = db.collection('bookings');
 
         // Check for overlapping bookings.
         const overlappingBookingsSnapshot = await bookingsRef
@@ -234,7 +226,7 @@ export async function updateBooking(bookingId: string, input: AdminBookingFormIn
         if (customPrice && customPrice > 0) {
             finalPrice = customPrice;
         } else {
-            const cottageDoc = await adminDb.collection('cottages').doc(cottageId).get();
+            const cottageDoc = await db.collection('cottages').doc(cottageId).get();
             const pricePerNight = cottageDoc.data()?.pricePerNight || 0;
             const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 3600 * 24));
             finalPrice = pricePerNight * nights;
