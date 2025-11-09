@@ -14,24 +14,24 @@ export async function generateBlogArticle(input: GenerateBlogArticleInput): Prom
   }
 }
 
-export async function saveArticleAsDraft(title: string, content: string): Promise<{ success: boolean; postId?: string; error?: string }> {
-    try {
-        const slug = title.toLowerCase().replace(/\s+/g, '-').slice(0, 50);
-        const excerpt = content.substring(0, 150);
-        const result = await createPost({
-            title,
-            content,
-            author: "AI Assistant",
-            status: "draft",
-            slug,
-            excerpt,
-            featuredImageUrl: "",
-        });
+export async function saveArticleAsDraft(title: string, content: string) {
+  const slug = title
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .slice(0, 60);
 
-        return { success: result.success, postId: result.postId, error: result.error };
+  const excerpt = content.replace(/\s+/g, " ").slice(0, 150).trim();
 
-    } catch (e: any) {
-        console.error(e);
-        return { success: false, error: e.message || "Failed to save draft." };
-    }
+  const result = await createPost({
+    title,
+    content,
+    author: "AI Assistant",
+    status: "draft",
+    slug,
+    excerpt,
+    featuredImageUrl: "", // optional: later wire Cloudinary
+  });
+  return result;
 }
