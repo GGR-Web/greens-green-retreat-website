@@ -51,6 +51,16 @@ type Cottage = {
   pricePerNight: number;
 }
 
+function toDate(val: unknown): Date | null {
+  if (!val) return null;
+  if (val instanceof Date && !isNaN(val.getTime())) return val;
+  if (typeof val === 'string' || typeof val === 'number') {
+    const d = new Date(val);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+}
+
 export default function BookingPage() {
   const { toast } = useToast();
   const router = useRouter();
@@ -144,30 +154,19 @@ export default function BookingPage() {
     }
   }
 
-  const toDate = (d: unknown): Date | null => {
-    if (!d) return null;
-    try {
-      return d instanceof Date ? d : new Date(String(d));
-    } catch {
-      return null;
-    }
-  };
-
-  const isDateDisabled = (date: Date) => {
-    // Disable past dates
-    if (date < new Date(new Date().setHours(0, 0, 0, 0))) {
+  function isDateDisabled(date?: Date | null): boolean {
+    const d = date instanceof Date && !isNaN(date.getTime()) ? date : null;
+    if (!d) return false;
+    if (d < new Date(new Date().setHours(0, 0, 0, 0))) {
         return true;
     }
-    // Disable dates that are part of a booked range
     for (const range of bookedDates) {
       const start = toDate((range as any)?.from);
       const end   = toDate((range as any)?.to);
-      if (start && end && isWithinInterval(date, { start, end })) {
-        return true;
-      }
+      if (start && end && isWithinInterval(d, { start, end })) return true;
     }
     return false;
-  };
+  }
 
 
   return (
