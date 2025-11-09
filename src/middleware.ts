@@ -1,41 +1,41 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+  const { pathname } = request.nextUrl;
   const sessionCookie = request.cookies.get('__session');
 
-  // Paths that are part of the admin section but don't require the sidebar/auth
+  // Public admin page(s)
   const isAuthPage = pathname === '/admin/login';
-  
-  // All other pages under /admin are protected
+
+  // All other /admin paths are protected
   const isProtectedRoute = pathname.startsWith('/admin') && !isAuthPage;
 
-  // If the user is not logged in and tries to access a protected route, redirect to login.
+  // Not logged in → redirect to /admin/login
   if (!sessionCookie && isProtectedRoute) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/admin/login'
-    return NextResponse.redirect(url)
+    const url = request.nextUrl.clone();
+    url.pathname = '/admin/login';
+    return NextResponse.redirect(url);
   }
 
-  // If the user is logged in and tries to access the login page, redirect to the dashboard.
+  // Logged in and trying to visit /admin/login → send to dashboard
   if (sessionCookie && isAuthPage) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/admin/dashboard'
-    return NextResponse.redirect(url)
+    const url = request.nextUrl.clone();
+    url.pathname = '/admin/dashboard';
+    return NextResponse.redirect(url);
   }
-  
-  // If the user visits the base /admin path, decide where to send them
+
+  // Visiting bare /admin → route based on auth
   if (pathname === '/admin') {
-    const url = request.nextUrl.clone()
+    const url = request.nextUrl.clone();
     url.pathname = sessionCookie ? '/admin/dashboard' : '/admin/login';
     return NextResponse.redirect(url);
   }
 
-  return NextResponse.next()
+  return NextResponse.next();
 }
 
-// See "Matching Paths" below to learn more
+// Only run on admin routes
 export const config = {
-  matcher: ['/admin/:path*'],
-}
+  matcher: ['/admin', '/admin/:path*'],
+};
