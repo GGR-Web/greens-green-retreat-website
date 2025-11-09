@@ -94,6 +94,9 @@ export async function createJournalPost(input: PostFormInput): Promise<{ success
     }
 }
 
+// Back-compat for older callers (AI Studio, etc.)
+export const createPost = createJournalPost;
+
 export async function getPost(postId: string) {
     if (!adminDb) return { error: "Database not initialized." };
     try {
