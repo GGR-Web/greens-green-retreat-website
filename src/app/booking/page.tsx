@@ -144,6 +144,15 @@ export default function BookingPage() {
     }
   }
 
+  const toDate = (d: unknown): Date | null => {
+    if (!d) return null;
+    try {
+      return d instanceof Date ? d : new Date(String(d));
+    } catch {
+      return null;
+    }
+  };
+
   const isDateDisabled = (date: Date) => {
     // Disable past dates
     if (date < new Date(new Date().setHours(0, 0, 0, 0))) {
@@ -151,9 +160,11 @@ export default function BookingPage() {
     }
     // Disable dates that are part of a booked range
     for (const range of bookedDates) {
-        if (isWithinInterval(date, { start: range.from, end: range.to })) {
-            return true;
-        }
+      const start = toDate((range as any)?.from);
+      const end   = toDate((range as any)?.to);
+      if (start && end && isWithinInterval(date, { start, end })) {
+        return true;
+      }
     }
     return false;
   };
