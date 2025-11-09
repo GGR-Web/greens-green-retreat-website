@@ -24,7 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ArrowLeft } from "lucide-react";
-import { createPost } from '../actions';
+import { createJournalPost } from '../actions';
 import { Separator } from '@/components/ui/separator';
 
 const postFormSchema = z.object({
@@ -64,7 +64,7 @@ export default function AdminNewPostPage() {
 
  async function onSubmit(values: z.infer<typeof postFormSchema>) {
     setIsLoading(true);
-    const result = await createPost(values);
+    const result = await createJournalPost(values);
     setIsLoading(false);
 
     if (result.success && result.postId) {

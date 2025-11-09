@@ -58,7 +58,7 @@ export async function getPosts(): Promise<{ posts?: Post[], error?: string }> {
 }
 
 
-export async function createPost(input: PostFormInput): Promise<{ success: boolean; postId?: string; error?: string }> {
+export async function createJournalPost(input: PostFormInput): Promise<{ success: boolean; postId?: string; error?: string }> {
     if (!adminDb) {
         return { success: false, error: 'Database connection not available.' };
     }
