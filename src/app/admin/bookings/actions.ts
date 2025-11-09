@@ -162,31 +162,36 @@ export async function createBookingFromAdmin(input: AdminBookingFormInput): Prom
 }
 
 export async function getBooking(bookingId: string) {
-    const db = getAdminDb();
-    try {
-        const bookingDoc = await db.collection('bookings').doc(bookingId).get();
-        if (!bookingDoc.exists) {
-            return { error: "Booking not found." };
-        }
-        const data = bookingDoc.data()!;
-        
-        // Convert Timestamps to serializable format (JS Date objects)
-        const toDate = (timestamp: Timestamp | undefined) => timestamp ? timestamp.toDate() : null;
-        
-        return {
-            booking: {
-                id: bookingDoc.id,
-                ...data,
-                checkIn: toDate(data.checkIn),
-                checkOut: toDate(data.checkOut),
-                createdAt: toDate(data.createdAt)?.toISOString() ?? new Date().toISOString()
-            }
-        };
-    } catch (error: any) {
-        console.error("Error fetching booking:", error);
-        return { error: error.message || "An unknown error occurred." };
-    }
-}
+  const adminDb = getAdminDb();
+   const doc = await adminDb.collection('bookings').doc(bookingId).get();
+   if (!doc.exists) return { booking: null, error: 'Booking not found' };
+   const data = doc.data() || {};
++  const createdAt =
++    data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ?? null);
++  const checkIn =
++    data.checkIn?.toDate ? data.checkIn.toDate() : (data.checkIn ?? null);
++  const checkOut =
++    data.checkOut?.toDate ? data.checkOut.toDate() : (data.checkOut ?? null);
+ 
+-  return { booking: { ...data, id: doc.id } };
++  return {
++    booking: {
++      id: doc.id,
++      createdAt: createdAt ? new Date(createdAt).toISOString() : '',
++      name: data.name ?? '',
++      email: data.email ?? '',
++      phone: data.phone ?? '',
++      cottageId: data.cottageId ?? '',
++      cottageName: data.cottageName ?? '',
++      checkIn,
++      checkOut,
++      guests: data.guests ?? 1,
++      notes: data.notes ?? '',
++      status: data.status ?? 'pending',
++      totalPrice: data.totalPrice ?? 0,
++    },
++  };
+ }
 
 export async function updateBooking(bookingId: string, input: AdminBookingFormInput): Promise<{ success: boolean; error?: string }> {
     const db = getAdminDb();
