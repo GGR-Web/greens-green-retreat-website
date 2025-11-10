@@ -1,4 +1,3 @@
-'''
 'use server';
 import 'server-only';
 
@@ -82,4 +81,3 @@ export const adminDb: Firestore | null = (() => {
 export const adminAuth: Auth | null = (() => {
   try { return getAdminAuth(); } catch { return null; }
 })();
-'''

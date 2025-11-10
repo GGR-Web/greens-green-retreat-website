@@ -1,4 +1,3 @@
-'''
 'use server';
 import 'server-only';
 
@@ -258,4 +257,3 @@ export async function updateBooking(bookingId: string, input: AdminBookingFormIn
         return { success: false, error: error.message || 'An unexpected error occurred.' };
     }
 }
-'''
