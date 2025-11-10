@@ -1,0 +1,11 @@
+{
+  "id": "current",
+  "currency": "KES",
+  "taxRate": 0.0,
+  "rules": [
+    { "slug": "forest-cottage", "pricePerNight": 12000 },
+    { "slug": "valley-cottage", "pricePerNight": 14000 }
+  ],
+  "createdAt": "now",
+  "updatedAt": "now"
+}

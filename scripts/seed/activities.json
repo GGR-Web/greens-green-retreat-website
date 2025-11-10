@@ -1,0 +1,14 @@
+[
+  {
+    "slug": "guided-forest-walk",
+    "title": "Guided Forest Walk",
+    "summary": "Learn local flora & birds with our guide.",
+    "imageUrl": "https://res.cloudinary.com/degsnfmco/image/upload/v1690000000/walk.jpg"
+  },
+  {
+    "slug": "tea-farm-tour",
+    "title": "Tea Farm Tour",
+    "summary": "Explore Tigoni’s tea culture.",
+    "imageUrl": "https://res.cloudinary.com/degsnfmco/image/upload/v1690000000/tea.jpg"
+  }
+]

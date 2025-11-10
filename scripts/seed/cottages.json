@@ -1,0 +1,16 @@
+[
+  {
+    "slug": "forest-cottage",
+    "name": "Forest Cottage",
+    "excerpt": "A cozy forest-side cottage with birdsong mornings.",
+    "featuredImageUrl": "https://res.cloudinary.com/degsnfmco/image/upload/v1690000000/forest.jpg",
+    "pricePerNight": 12000
+  },
+  {
+    "slug": "valley-cottage",
+    "name": "Valley Cottage",
+    "excerpt": "Views across the peaceful Tigoni valley.",
+    "featuredImageUrl": "https://res.cloudinary.com/degsnfmco/image/upload/v1690000000/valley.jpg",
+    "pricePerNight": 14000
+  }
+]
