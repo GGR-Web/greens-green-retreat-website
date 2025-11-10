@@ -1,3 +1,4 @@
+'''
 'use server';
 import 'server-only';
 
@@ -166,31 +167,30 @@ export async function getBooking(bookingId: string) {
    const doc = await adminDb.collection('bookings').doc(bookingId).get();
    if (!doc.exists) return { booking: null, error: 'Booking not found' };
    const data = doc.data() || {};
-+  const createdAt =
-+    data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ?? null);
-+  const checkIn =
-+    data.checkIn?.toDate ? data.checkIn.toDate() : (data.checkIn ?? null);
-+  const checkOut =
-+    data.checkOut?.toDate ? data.checkOut.toDate() : (data.checkOut ?? null);
+  const createdAt =
+    data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ?? null);
+  const checkIn =
+    data.checkIn?.toDate ? data.checkIn.toDate() : (data.checkIn ?? null);
+  const checkOut =
+    data.checkOut?.toDate ? data.checkOut.toDate() : (data.checkOut ?? null);
  
--  return { booking: { ...data, id: doc.id } };
-+  return {
-+    booking: {
-+      id: doc.id,
-+      createdAt: createdAt ? new Date(createdAt).toISOString() : '',
-+      name: data.name ?? '',
-+      email: data.email ?? '',
-+      phone: data.phone ?? '',
-+      cottageId: data.cottageId ?? '',
-+      cottageName: data.cottageName ?? '',
-+      checkIn,
-+      checkOut,
-+      guests: data.guests ?? 1,
-+      notes: data.notes ?? '',
-+      status: data.status ?? 'pending',
-+      totalPrice: data.totalPrice ?? 0,
-+    },
-+  };
+  return {
+    booking: {
+      id: doc.id,
+      createdAt: createdAt ? new Date(createdAt).toISOString() : '',
+      name: data.name ?? '',
+      email: data.email ?? '',
+      phone: data.phone ?? '',
+      cottageId: data.cottageId ?? '',
+      cottageName: data.cottageName ?? '',
+      checkIn,
+      checkOut,
+      guests: data.guests ?? 1,
+      notes: data.notes ?? '',
+      status: data.status ?? 'pending',
+      totalPrice: data.totalPrice ?? 0,
+    },
+  };
  }
 
 export async function updateBooking(bookingId: string, input: AdminBookingFormInput): Promise<{ success: boolean; error?: string }> {
@@ -258,3 +258,4 @@ export async function updateBooking(bookingId: string, input: AdminBookingFormIn
         return { success: false, error: error.message || 'An unexpected error occurred.' };
     }
 }
+'''

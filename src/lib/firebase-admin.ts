@@ -1,37 +1,85 @@
+'''
+'use server';
 import 'server-only';
-import * as admin from 'firebase-admin';
 
-let app: admin.app.App | undefined;
+import { getApps, initializeApp, applicationDefault, cert, type App } from 'firebase-admin/app';
+import { getFirestore, type Firestore } from 'firebase-admin/firestore';
+import { getAuth, type Auth } from 'firebase-admin/auth';
 
-function ensureApp() {
-  if (!admin.apps.length) {
-    const inProd = process.env.NODE_ENV === 'production';
-    if (inProd) {
-      // PRODUCTION: Application Default Credentials (ADC)
-      app = admin.initializeApp();
-    } else {
-      // LOCAL/EMULATOR: projectId only
-      app = admin.initializeApp({
-        projectId: process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT,
-      });
-    }
-  } else {
-    app = admin.app();
+/**
+ * IMPORTANT
+ * - In STAGING/PROD on Firebase Hosting/Functions, we use ADC: initializeApp() with NO ARGS.
+ * - Locally/emulator: use applicationDefault() or FIREBASE_ADMIN_SA env JSON.
+ * - This module is server-only and safe for RSC/edge middleware EXCEPT: do not import from client components.
+ */
+
+let _app: App | undefined;
+let _db: Firestore | undefined;
+let _auth: Auth | undefined;
+
+function createApp(): App {
+  if (getApps().length) return getApps()[0];
+
+  // Detect managed runtime (Cloud Functions/Run/Hosting functions)
+  const inGcpManaged =
+    !!process.env.K_SERVICE || // Cloud Run
+    !!process.env.FUNCTION_TARGET || // Functions gen1
+    !!process.env.FUNCTIONS_TARGET; // Functions gen2 env sometimes sets this
+
+  // Emulator/local dev? Prefer explicit creds if provided.
+  const hasServiceAccountJson = !!process.env.FIREBASE_ADMIN_SA;
+  const hasGcloudDefaultCreds = !!process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+  if (inGcpManaged) {
+    // STAGING/PROD: use ADC with NO ARGS (Guardrail)
+    return initializeApp();
   }
+
+  // Local/dev:
+  if (hasServiceAccountJson) {
+    const json = JSON.parse(process.env.FIREBASE_ADMIN_SA as string);
+    return initializeApp({ credential: cert(json) });
+  }
+
+  if (hasGcloudDefaultCreds) {
+    return initializeApp({ credential: applicationDefault() });
+  }
+
+  // Last resort: still attempt ADC (works if 'gcloud auth application-default login' ran)
+  return initializeApp();
 }
 
-export function getAdminDb(): FirebaseFirestore.Firestore {
-  ensureApp();
-  return admin.firestore();
+export function getAdminApp(): App {
+  if (!_app) _app = createApp();
+  return _app;
 }
 
-// Back-compat: some modules import { adminDb }. Provide a stable binding.
-export const adminDb = getAdminDb();
+export function getAdminDb(): Firestore {
+  if (_db) return _db;
+  const app = getAdminApp();
+  const db = getFirestore(app);
 
-// --- NEW: Admin Auth helper + back-compat export ---
-export function getAdminAuth(): admin.auth.Auth {
-  ensureApp();
-  return admin.auth();
+  // Point to emulator if present
+  if (process.env.FIRESTORE_EMULATOR_HOST) {
+    db.settings({ host: process.env.FIRESTORE_EMULATOR_HOST, ssl: false });
+  }
+
+  _db = db;
+  return _db;
 }
 
-export const adminAuth = getAdminAuth();
+export function getAdminAuth(): Auth {
+  if (_auth) return _auth;
+  _auth = getAuth(getAdminApp());
+  return _auth;
+}
+
+// Back-compat named exports (some files import these directly)
+export const adminDb: Firestore | null = (() => {
+  try { return getAdminDb(); } catch { return null; }
+})();
+
+export const adminAuth: Auth | null = (() => {
+  try { return getAdminAuth(); } catch { return null; }
+})();
+'''
