@@ -10,7 +10,8 @@ export async function createSessionCookie(idToken: string): Promise<{ status: st
   try {
     const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
     const sessionCookie = await adminAuth.createSessionCookie(idToken, {expiresIn});
-    cookies().set('__session', sessionCookie, {
+    const cookieStore = await cookies();
+    cookieStore.set('__session', sessionCookie, {
       maxAge: expiresIn,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -25,5 +26,6 @@ export async function createSessionCookie(idToken: string): Promise<{ status: st
 }
 
 export async function signOut() {
-    cookies().delete('__session');
+    const cookieStore = await cookies();
+    cookieStore.delete('__session');
 }

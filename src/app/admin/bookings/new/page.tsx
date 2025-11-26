@@ -54,6 +54,17 @@ type Cottage = {
   pricePerNight: number;
 }
 
+// Normalizes unknown values into valid Date or returns null (no throw).
+function toDate(val: unknown): Date | null {
+  if (!val) return null;
+  if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
+  if (typeof val === 'string' || typeof val === 'number') {
+    const d = new Date(val as any);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+}
+
 export default function AdminNewBookingPage() {
   const { toast } = useToast();
   const router = useRouter();
@@ -161,17 +172,23 @@ export default function AdminNewBookingPage() {
     }
   }
 
-  const isDateDisabled = (date: Date) => {
-    if (date < new Date(new Date().setHours(0, 0, 0, 0))) {
-        return true;
-    }
+  // Hardened guard: ensures date/start/end are valid Dates before using isWithinInterval
+  function isDateDisabled(date?: Date): boolean {
+    // If no date, don't disable
+    if (!date || isNaN(date.getTime())) return false;
+
     for (const range of bookedDates) {
-        if (isWithinInterval(date, { start: range.from, end: range.to })) {
-            return true;
-        }
+      const start = toDate((range as any)?.from);
+      const end = toDate((range as any)?.to);
+      if (!start || !end) continue; // skip incomplete ranges
+
+      // Optional: make the interval inclusive of the end by adding 1ms / one-day tweak if needed.
+      if (isWithinInterval(date, { start, end })) {
+        return true;
+      }
     }
     return false;
-  };
+  }
 
   return (
     <>

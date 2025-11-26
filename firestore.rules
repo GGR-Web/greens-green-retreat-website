@@ -1,0 +1,39 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAdmin() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // AUTH: User profiles can be read by anyone, but only modified by the owner or an admin.
+    match /users/{userId} {
+      allow read;
+      allow write: if request.auth.uid == userId || isAdmin();
+    }
+
+    // PUBLIC: Cottages and journal posts are publicly readable.
+    match /cottages/{cottageId} {
+      allow read;
+      allow write: if isAdmin(); // Only admins can modify cottage details.
+    }
+    match /journal/{postId} {
+      allow read;
+      allow write: if isAdmin(); // Only admins can write/edit posts.
+    }
+
+    // TRANSIENT: Bookings can be created by anyone, but only read/updated by admins.
+    match /bookings/{bookingId} {
+      allow create; // Anyone can submit a booking inquiry.
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ADMIN-ONLY: Analytics should be readable only by admins.
+    match /analytics/{docId} {
+       allow read, write: if isAdmin();
+    }
+  }
+}

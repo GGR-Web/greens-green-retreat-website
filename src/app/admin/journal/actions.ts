@@ -21,7 +21,7 @@ const postFormSchema = z.object({
   status: z.enum(['draft', 'published']),
   slug: z.string().min(3, 'Slug must be at least 3 characters.'),
   excerpt: z.string().min(10, 'Excerpt must be at least 10 characters.'),
-  featuredImageUrl: z.string().url('Must be a valid URL.'),
+  featuredImageUrl: z.string().optional(),
 });
 
 type PostFormInput = z.infer<typeof postFormSchema>;
@@ -58,7 +58,7 @@ export async function getPosts(): Promise<{ posts?: Post[], error?: string }> {
 }
 
 
-export async function createPost(input: PostFormInput): Promise<{ success: boolean; postId?: string; error?: string }> {
+export async function createJournalPost(input: PostFormInput): Promise<{ success: boolean; postId?: string; error?: string }> {
     if (!adminDb) {
         return { success: false, error: 'Database connection not available.' };
     }
@@ -79,7 +79,7 @@ export async function createPost(input: PostFormInput): Promise<{ success: boole
             status,
             slug,
             excerpt,
-            featuredImageUrl,
+            featuredImageUrl: featuredImageUrl || '',
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
         });
@@ -93,6 +93,9 @@ export async function createPost(input: PostFormInput): Promise<{ success: boole
         return { success: false, error: error.message || 'An unexpected error occurred.' };
     }
 }
+
+// Back-compat for older callers (AI Studio, etc.)
+export const createPost = createJournalPost;
 
 export async function getPost(postId: string) {
     if (!adminDb) return { error: "Database not initialized." };
@@ -143,7 +146,7 @@ export async function updatePost(postId: string, input: PostFormInput): Promise<
             status,
             slug,
             excerpt,
-            featuredImageUrl,
+            featuredImageUrl: featuredImageUrl || '',
             updatedAt: FieldValue.serverTimestamp(),
         });
         

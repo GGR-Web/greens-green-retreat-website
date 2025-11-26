@@ -54,6 +54,16 @@ type Cottage = {
   pricePerNight: number;
 }
 
+function toDate(val: unknown): Date | null {
+  if (!val) return null;
+  if (val instanceof Date && !isNaN(val.getTime())) return val;
+  if (typeof val === 'string' || typeof val === 'number') {
+    const d = new Date(val);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+}
+
 export default function AdminEditBookingPage() {
   const { toast } = useToast();
   const router = useRouter();
@@ -83,12 +93,26 @@ export default function AdminEditBookingPage() {
         
         const bookingResult = await getBooking(bookingId);
         if (bookingResult.booking) {
-            const { booking } = bookingResult;
+            // Broaden local view of the booking document to include optional fields
+            type BookingDoc = {
+              id: string;
+              name?: string;
+              email?: string;
+              phone?: string;
+              cottageId?: string;
+              checkIn: Date | null;
+              checkOut: Date | null;
+              createdAt: string;
+              finalPrice?: number;
+              bookingNotes?: string;
+            };
+
+            const booking = bookingResult.booking as BookingDoc;
             form.reset({
-                name: booking.name,
-                email: booking.email,
-                phone: booking.phone,
-                cottageId: booking.cottageId,
+                name: booking?.name ?? '',
+                email: booking?.email ?? '',
+                phone: booking?.phone ?? '',
+                cottageId: booking?.cottageId ?? '',
                 checkIn: booking.checkIn ? new Date(booking.checkIn) : undefined,
                 checkOut: booking.checkOut ? new Date(booking.checkOut) : undefined,
                 customPrice: booking.finalPrice,
@@ -177,17 +201,16 @@ export default function AdminEditBookingPage() {
     }
   }
 
-  const isDateDisabled = (date: Date) => {
-    if (date < new Date(new Date().setHours(0, 0, 0, 0))) {
-        return true;
-    }
+  function isDateDisabled(date?: Date | null): boolean {
+    const d = date instanceof Date && !isNaN(date.getTime()) ? date : null;
+    if (!d) return false;
     for (const range of bookedDates) {
-        if (isWithinInterval(date, { start: range.from, end: range.to })) {
-            return true;
-        }
+      const start = toDate((range as any)?.from);
+      const end   = toDate((range as any)?.to);
+      if (start && end && isWithinInterval(d, { start, end })) return true;
     }
     return false;
-  };
+  }
   
   if (isDataLoading) {
     return <div className="text-center p-8">Loading booking details...</div>

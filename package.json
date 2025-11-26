@@ -3,16 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack -p 9002",
+    "dev": "next dev --turbopack -p 9004",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "seed:emu": "node scripts/seed/index.mjs --target=emulator",
+    "seed:staging:sa": "node scripts/seed/index.mjs --target=staging --project ggr-staging-20251104152722 --sa ./service-account.json",
+    "seed:staging:adc": "node scripts/seed/index.mjs --target=staging --project ggr-staging-20251104152722"
   },
   "engines": {
-    "node": "18"
+    "node": "20"
   },
   "dependencies": {
     "@genkit-ai/firebase": "^1.17.1",
