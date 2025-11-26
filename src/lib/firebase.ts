@@ -1,4 +1,4 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
+import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
 // Your web app's Firebase configuration, read from environment variables
@@ -12,7 +12,7 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-let app;
+let app: FirebaseApp; // Explicitly type the app variable
 if (!getApps().length) {
     if (!firebaseConfig.apiKey) {
         throw new Error("Missing Firebase config. Make sure environment variables are set.");
