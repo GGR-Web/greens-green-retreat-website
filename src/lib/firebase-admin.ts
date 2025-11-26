@@ -1,5 +1,3 @@
-'use server';
-import 'server-only';
 
 import { getApps, initializeApp, applicationDefault, cert, type App } from 'firebase-admin/app';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';

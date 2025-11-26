@@ -26,11 +26,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ArrowLeft } from "lucide-react";
 import { createJournalPost } from '../actions';
 import { Separator } from '@/components/ui/separator';
+import { uploadFile } from '@/lib/firebase/storage'; // Import the upload function
 
 const postFormSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters." }),
   slug: z.string().min(3, { message: "Slug must be at least 3 characters." }).regex(/^[a-z0-9-]+$/, { message: "Slug can only contain lowercase letters, numbers, and hyphens."}),
-  featuredImageUrl: z.string().url({ message: "Please enter a valid image URL." }),
+  featuredImage: z.any().optional(), // Accept any, since we'll handle file validation manually
   excerpt: z.string().min(20, { message: "Excerpt must be at least 20 characters." }).max(200, { message: "Excerpt cannot be longer than 200 characters."}),
   content: z.string().min(10, { message: "Content must be at least 10 characters." }),
   author: z.string().min(2, { message: "Author name is required." }),
@@ -45,14 +46,13 @@ export default function AdminNewPostPage() {
 
   const form = useForm<z.infer<typeof postFormSchema>>({
     resolver: zodResolver(postFormSchema),
-    defaultValues: { 
-        title: '', 
+    defaultValues: {
+        title: '',
         slug: '',
-        featuredImageUrl: '',
         excerpt: '',
-        content: '', 
-        author: 'Admin', 
-        status: 'draft' 
+        content: '',
+        author: 'Admin',
+        status: 'draft'
     }
   });
 
@@ -64,7 +64,38 @@ export default function AdminNewPostPage() {
 
  async function onSubmit(values: z.infer<typeof postFormSchema>) {
     setIsLoading(true);
-    const result = await createJournalPost(values);
+
+    let featuredImageUrl = '';
+    // Check if a file is selected
+    if (values.featuredImage && values.featuredImage.length > 0) {
+      const file = values.featuredImage[0];
+      try {
+        const filePath = `journal/images/${Date.now()}-${file.name}`;
+        featuredImageUrl = await uploadFile(file, filePath);
+      } catch (error) {
+        setIsLoading(false);
+        toast({
+          title: "Image Upload Failed",
+          description: "There was an error uploading the featured image.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+
+    const postData = {
+        ...values,
+        featuredImageUrl: featuredImageUrl,
+    };
+    
+    // The 'featuredImage' field is not part of the data model, so we don't pass it to the server action
+    delete (postData as any).featuredImage;
+
+
+    const result = await createJournalPost(postData);
+
+
     setIsLoading(false);
 
     if (result.success && result.postId) {
@@ -128,19 +159,26 @@ export default function AdminNewPostPage() {
                   )}
                 />
                  <FormField
-                  control={form.control}
-                  name="featuredImageUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Featured Image URL</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://placehold.co/1200x600.png" {...field} disabled={isLoading} />
-                      </FormControl>
-                      <FormDescription>The main image for the article display and social sharing.</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                    control={form.control}
+                    name="featuredImage"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Featured Image</FormLabel>
+                        <FormControl>
+                            <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => field.onChange(e.target.files)}
+                            disabled={isLoading}
+                            />
+                        </FormControl>
+                        <FormDescription>
+                            The main image for the article display and social sharing.
+                        </FormDescription>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
                 <FormField
                   control={form.control}
                   name="excerpt"
